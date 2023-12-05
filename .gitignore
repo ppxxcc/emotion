@@ -2,3 +2,6 @@ asset/
 obj/
 out/
 romdisk/
+
+Makefile.old
+

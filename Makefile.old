@@ -1,0 +1,91 @@
+# =============================================================================
+# File:        Makefile
+# Description: Makefile for the Emotion demo
+# Author:      Shirobon
+# Date:        2023/12/04
+# =============================================================================
+
+SRC_DIR     = src
+OBJ_DIR     = obj
+OUT_DIR     = out
+ROMDISK_DIR = romdisk
+TEXTURE_DIR = asset/texture
+MODEL_DIR   = asset/model
+
+CC = kos-cc
+CFLAGS = -std=c99 -Wall -Wextra
+
+# Source Code Dependencies
+SRC  = $(wildcard $(SRC_DIR)/*.c)
+DEPS = $(wildcard $(SRC_DIR)/*.h)
+OBJ  = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
+
+# Texture Dependencies
+TEXTURESRC = $(wildcard $(TEXTURE_DIR)/*.888)
+TEXTUREOBJ = $(patsubst $(TEXTURE_DIR)/%.888, $(OBJ_DIR)/%.o, $(TEXTURESRC))
+
+# Romdisk Dependencies
+ROMDISKOBJ = obj/romdisk.o
+ROMDISKIMG = romdisk/romdisk.img
+
+BUILDMODE ?= DEBUG
+
+ifeq ($(BUILDMODE),DEBUG)
+	CFLAGS += -g -O0
+	TARGET = $(OUT_DIR)/emotion_dbg.elf
+else ifeq ($(BUILDMODE),OPTIMIZE)
+	CFLAGS += -O2
+	TARGET = $(OUT_DIR)/emotion_rls.elf
+else
+	$(error Invalid build mode: $(BUILDMODE))
+endif
+
+# Default target
+all: $(TARGET)
+
+$(shell mkdir -p $(OUT_DIR) $(OBJ_DIR) $(ROMDISK_DIR))
+
+# Rule to build executable
+# Target depends on objects
+# (compiler) (flags) -o (target) (prereqs)
+$(TARGET): $(OBJ) $(TEXTUREOBJ)
+	$(CC) $(CFLAGS) -o $@ $^
+
+# Rule to compile source files
+# Object files depend on source files
+# (compiler) (flags) -c (prereqs) -o (outputs)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule to convert RGB888 to RGB565 to object files
+# Object files depend on source 888 textures
+# (rgb convert) (prereq) (555 texture)
+# (bin2o) (555 texture) (symbol name) (output)
+$(OBJ_DIR)/%.o: $(TEXTURE_DIR)/%.888
+	./util/rgb888_to_rgb565.py -i $< -o $(basename $<).565
+	$(KOS_BASE)/utils/bin2o/bin2o $(basename $<).565 $(addprefix g_asset_,$(notdir $(basename $<))) $@
+
+# Rule to generate a romdisk image from files in romdisk/
+$(ROMDISKIMG):
+	
+	$(KOS_GENROMFS) -f romdisk/romdisk.img
+
+# Clean all outputs
+clean:
+	rm -rf $(OBJ_DIR) $(OUT_DIR) $(ROMDISK_DIR) $(TEXTURE_DIR)/*.565
+
+# Run
+TOOL = /opt/dreamcast/bin/dc-tool-ser
+PORT = /dev/ttyUSB0
+BAUD = 1562500
+run: $(TARGET)
+	$(TOOL) -t $(PORT) -b $(BAUD) -x $(TARGET)
+
+
+	ifeq($(suffix $<),.565)
+		cp $< $(ROMDISK_DIR)/$(TEXTURE_DIR)/$(basename $<)
+	else ifeq($(suffix $<),.obj)
+		cp $< $(ROMDISK_DIR)/$(MODEL_DIR)/$(basename $<)
+	else
+		echo Skipping $< for romdisk.
+	endif
