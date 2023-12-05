@@ -3,5 +3,5 @@ obj/
 out/
 romdisk/
 
-Makefile.old
+./Makefile.old
 
