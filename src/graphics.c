@@ -80,9 +80,12 @@ gfx_tid_t gfx_load_texture(const char* asset, size_t width, size_t height)
     gfx_texture_t* tmp = realloc(textures, sizeof(gfx_texture_t) * (texture_id_count+1));
     if(tmp == NULL) {
         debug_printf(DEBUG_ERROR, "Failed to allocate memory for texture array.\n");
+        fclose(f);
         pvr_mem_free(ptx);
         return GFX_ERROR;
     }
+
+    fclose(f);
 
     textures = tmp;
 
@@ -90,7 +93,7 @@ gfx_tid_t gfx_load_texture(const char* asset, size_t width, size_t height)
     texture_active_count++;
     texture_memory += size;
 
-    gfx_tid_t id = id;
+    gfx_tid_t id = texture_id_count-1;
 
     textures[id].asset      = (char*)asset;
     textures[id].pvr_memory = ptx;

@@ -25,12 +25,15 @@ typedef struct model_face_t
 typedef struct model_t
 {
     model_face_t* faces;
+    size_t        face_count;
     gfx_tid_t     tid;
     bool          textured;
-    model_mid_t   mid;
+    model_mid_t   id;
 } model_t;
 
 model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured);
+void        model_free_obj(model_mid_t mid);
 
+void model_render_obj(model_mid_t mid);
 
 #endif
