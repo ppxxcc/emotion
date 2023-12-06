@@ -8,6 +8,7 @@
 SRC_DIR      = src
 OBJ_DIR      = obj
 OUT_DIR      = out
+DEBUG_DIR    = /home/pxc/development/projects/emotion/debug
 ROMDISK_DIR  = romdisk
 TEXTURE_DIR  = asset/texture
 MODEL_DIR    = asset/model
@@ -50,7 +51,7 @@ endif
 all: $(TARGET)
 
 # Create necessary directories
-$(shell mkdir -p $(OUT_DIR) $(OBJ_DIR) $(ROMDISK_DIR))
+$(shell mkdir -p $(OUT_DIR) $(OBJ_DIR) $(ROMDISK_DIR) $(DEBUG_DIR))
 
 
 # Rule to build executable
@@ -92,11 +93,11 @@ $(ROMDISK_DIR)/%: %
 
 # Clean all outputs
 clean:
-	rm -rf $(OBJ_DIR) $(OUT_DIR) $(ROMDISK_DIR) $(TEXTURE_DIR)/*.565
+	rm -rf $(OBJ_DIR) $(OUT_DIR) $(ROMDISK_DIR) $(DEBUG_DIR) $(TEXTURE_DIR)/*.565
 
 # Run
 TOOL = /opt/dreamcast/bin/dc-tool-ser
 PORT = /dev/ttyUSB0
 BAUD = 1562500
 run: $(TARGET)
-	$(TOOL) -t $(PORT) -b $(BAUD) -x $(TARGET)
+	sudo $(TOOL) -t $(PORT) -b $(BAUD) -c /home/pxc/development/projects/emotion/debug -x $(TARGET)

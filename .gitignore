@@ -2,6 +2,7 @@ asset/
 obj/
 out/
 romdisk/
+debug/
 
 ./Makefile.old
 

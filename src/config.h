@@ -23,10 +23,14 @@
 // ============================================================================
 // Begin Program Configuration
 // ============================================================================
+#define CONFIG_VERSION "0.0.1" // Program version number
+
 #define CONFIG_FORCEINLINE  // Force inline functions to actually be inlined
 
 #define CONFIG_RESOLUTION 240 // 240 for 240p, 480 for 480i/p
 
+#define CONFIG_DEBUG_LOG_ENABLED // Enable debug log
+#define CONFIG_DEBUG_LOG_PATH "/pc/debug.log"
 
 #ifdef CONFIG_FORCEINLINE
     #define INLINE static inline __attribute__((always_inline))

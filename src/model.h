@@ -30,7 +30,7 @@ typedef struct model_t
     model_mid_t   mid;
 } model_t;
 
-model_mid_t model_load_obj(void* obj_asset, gfx_tid_t tid, bool textured);
+model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured);
 
 
 #endif

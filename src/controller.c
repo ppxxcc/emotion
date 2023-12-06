@@ -5,7 +5,9 @@
 // Date:        2023/12/04
 // ============================================================================
 
+
 #include "controller.h"
+#include "debug.h"
 
 static maple_device_t*    device;
 static controller_state_t state;
@@ -15,9 +17,11 @@ bool controller_initialize(void)
     device = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
     
     if(device == NULL) {
+        debug_printf(DEBUG_ERROR, "Failed to initialize controller.\n");
         return false;
     }
     
+    debug_printf(DEBUG_INFO, "Initialized controller.\n");
     return true;
 }
 
@@ -28,6 +32,7 @@ bool controller_read_state(void)
     raw_state = (cont_state_t*)maple_dev_status(device);
 
     if(raw_state == NULL) {
+        debug_printf(DEBUG_ERROR, "Failed to read controller state.\n");
         return false;
     }
 
