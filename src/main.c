@@ -19,6 +19,8 @@ int main(void)
 
     gfx_initialize();
 
+    model_initialize();
+
     controller_initialize();
 
     gfx_tid_t   earth_texture = gfx_load_texture("/rd/asset/texture/earth_512x512.565", 512, 512);
@@ -77,7 +79,9 @@ int main(void)
 
     }
 
-    debug_end();
+    gfx_free_texture(earth_texture);
+    model_free_obj(earth_model);
 
+    debug_end();
     return 0;
 }

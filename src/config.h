@@ -23,14 +23,20 @@
 // ============================================================================
 // Begin Program Configuration
 // ============================================================================
-#define CONFIG_VERSION "0.0.1" // Program version number
+#define CONFIG_VERSION            "0.0.1"
 
-#define CONFIG_FORCEINLINE  // Force inline functions to actually be inlined
+#define CONFIG_FORCEINLINE
 
-#define CONFIG_RESOLUTION 240 // 240 for 240p, 480 for 480i/p
+#define CONFIG_RESOLUTION         240
 
-#define CONFIG_DEBUG_LOG_ENABLED // Enable debug log
-#define CONFIG_DEBUG_LOG_PATH "/pc/debug.log"
+#define CONFIG_DEBUG_LOG_ENABLED
+#define CONFIG_DEBUG_LOG_PATH     "/pc/debug.log"
+
+#define CONFIG_MAX_TEXTURES       32
+#define CONFIG_MAX_MODELS         32
+// ============================================================================
+// End Program Configuration
+// ============================================================================
 
 #ifdef CONFIG_FORCEINLINE
     #define INLINE static inline __attribute__((always_inline))

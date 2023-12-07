@@ -40,7 +40,7 @@ typedef struct gfx_texture_t
     char* asset;
     void* pvr_memory;
     size_t width, height, size;
-    gfx_tid_t id;
+    gfx_tid_t tid;
 } gfx_texture_t;
 
 void gfx_initialize(void);

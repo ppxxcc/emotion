@@ -13,24 +13,31 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <kos.h>
 
-static gfx_texture_t* textures; // Array type of active textures
-
-static size_t vertex_count;
-static size_t vertex_memory;
-static size_t texture_id_count;
-static size_t texture_active_count;
-static size_t texture_memory;
+static gfx_texture_t texture[CONFIG_MAX_TEXTURES];
+static bool          texture_occupied[CONFIG_MAX_TEXTURES];
+static size_t        texture_count;
+static size_t        texture_memory;
+static size_t        vertex_count;
+static size_t        vertex_memory;
 
 void gfx_initialize(void)
 {
-    textures              = NULL; // I know these should already be zero in bss
-    vertex_count          = 0;
-    vertex_memory         = 0;
-    texture_id_count      = 0;
-    texture_active_count  = 0;
-    texture_memory        = 0;
+    for(int i = 0; i < CONFIG_MAX_TEXTURES; i++) {
+        gfx_texture_t t = {0};
+        texture[i] = t;
+        texture_occupied[i] = false;
+    }
+    
+    texture_count   = 0;
+    texture_memory  = 0;
+    vertex_count    = 0;
+    vertex_memory   = 0;
+
+    debug_printf(DEBUG_INFO, "Initialized texture manager.\n");
+    debug_printf(DEBUG_BLANK,"Texture limit: %d\n", CONFIG_MAX_TEXTURES);
 
     vid_set_mode(CONFIG_VIDEO_MODE, PM_RGB565);
     pvr_init_defaults();
@@ -56,7 +63,12 @@ void gfx_end(void)
 
 gfx_tid_t gfx_load_texture(const char* asset, size_t width, size_t height)
 {
-    void* ptx;
+    if(texture_count >= CONFIG_MAX_TEXTURES) {
+        debug_printf(DEBUG_ERROR, "Cannot allocate more than %d textures.\n", CONFIG_MAX_TEXTURES);
+        return GFX_ERROR;
+    }
+
+    void* ptx; // Pointer to texture memory for PVR
     FILE* f;
     size_t size = width*height*2; // 16bpp/2 bytes per pixel
 
@@ -77,52 +89,54 @@ gfx_tid_t gfx_load_texture(const char* asset, size_t width, size_t height)
         return GFX_ERROR;
     }
 
-    gfx_texture_t* tmp = realloc(textures, sizeof(gfx_texture_t) * (texture_id_count+1));
-    if(tmp == NULL) {
-        debug_printf(DEBUG_ERROR, "Failed to allocate memory for texture array.\n");
-        fclose(f);
-        pvr_mem_free(ptx);
-        return GFX_ERROR;
-    }
-
     fclose(f);
 
-    textures = tmp;
+    gfx_tid_t first_available = 0;
 
-    texture_id_count++;
-    texture_active_count++;
+    while(texture_occupied[first_available] == true) {
+        first_available++;
+    }
+
+    gfx_tid_t tid = first_available;
+
+    texture_occupied[tid] = true;
+
+    texture_count++;
     texture_memory += size;
 
-    gfx_tid_t id = texture_id_count-1;
+    texture[tid].asset      = (char*)asset;
+    texture[tid].pvr_memory = ptx;
+    texture[tid].width      = width;
+    texture[tid].height     = height;
+    texture[tid].size       = size;
+    texture[tid].tid        = tid;
 
-    textures[id].asset      = (char*)asset;
-    textures[id].pvr_memory = ptx;
-    textures[id].width      = width;
-    textures[id].height     = height;
-    textures[id].size       = size;
-    textures[id].id         = id;
-
-    debug_printf(DEBUG_INFO, "Loaded PVR texture (tid = %d)\n", id);
+    debug_printf(DEBUG_INFO, "Loaded PVR texture (tid = %d)\n", tid);
     debug_printf(DEBUG_BLANK,"Asset: %s\n", asset);
     debug_printf(DEBUG_BLANK,"Size:  %dx%d\n", width, height);
     
-    debug_printf(DEBUG_INFO, "Active textures: %d\n", texture_active_count);
+    debug_printf(DEBUG_INFO, "Active textures: %d\n", texture_count);
     debug_printf(DEBUG_BLANK, "Texture memory used: %.1f KiB\n", texture_memory/1024.0f);
 
-    return id;
+    return tid;
 }
 
 void gfx_free_texture(gfx_tid_t tid)
 {
-    texture_active_count--;
-    texture_memory -= textures[tid].size;
-    pvr_mem_free(textures[tid].pvr_memory);
-    textures[tid].id = GFX_FREED;
+    if(tid >= CONFIG_MAX_TEXTURES || texture_occupied[tid] == false) {
+        debug_printf(DEBUG_ERROR, "Received invalid texture id (%d) for freeing.\n", tid);
+        return;
+    }
+
+    pvr_mem_free(texture[tid].pvr_memory);
+
+    texture_count--;
+    texture_memory -= texture[tid].size;
+    texture_occupied[tid] = false;
 
     debug_printf(DEBUG_INFO, "Freed PVR texture (tid = %d)\n", tid);
-    debug_printf(DEBUG_INFO, "Active textures: %d\n", texture_active_count);
-    debug_printf(DEBUG_BLANK,"Texture memory used: %d.1f KiB\n", texture_memory/1024.0f);
-
+    debug_printf(DEBUG_INFO, "Active textures: %d\n", texture_count);
+    debug_printf(DEBUG_BLANK,"Texture memory used: %.1f KiB\n", texture_memory/1024.0f);
 }
 
 void gfx_draw_op_tri(gfx_vertex_t va, gfx_vertex_t vb, gfx_vertex_t vc)
@@ -176,7 +190,7 @@ void gfx_draw_op_tex_tri(gfx_vertex_t va, gfx_vertex_t vb, gfx_vertex_t vc, gfx_
     pvr_vertex_t   v;
     gfx_texture_t  txr;
 
-    txr = textures[tid];
+    txr = texture[tid];
 
     pvr_poly_cxt_txr(&cxt,  PVR_LIST_OP_POLY,
                             PVR_TXRFMT_RGB565 | PVR_TXRFMT_NONTWIDDLED,

@@ -28,8 +28,10 @@ typedef struct model_t
     size_t        face_count;
     gfx_tid_t     tid;
     bool          textured;
-    model_mid_t   id;
+    model_mid_t   mid;
 } model_t;
+
+void model_initialize(void);
 
 model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured);
 void        model_free_obj(model_mid_t mid);

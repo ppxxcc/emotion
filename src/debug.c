@@ -25,7 +25,7 @@ bool debug_begin(uint8_t mode)
     
     if(debug_mode & DEBUG_FILE) {
         if((debug_log = fopen(CONFIG_DEBUG_LOG_PATH, "w")) == NULL) {
-            debug_printf(DEBUG_ERROR, "Failed to open debug log: %s\n", CONFIG_DEBUG_LOG_PATH);
+            printf("[ERROR] Failed to open debug log: %s\n", CONFIG_DEBUG_LOG_PATH);
             return false;
         }
         fprintf(debug_log, "Emotion by Shirobon ::: Version %s ::: Built on: %s %s\n\n", CONFIG_VERSION, __DATE__, __TIME__);
