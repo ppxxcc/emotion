@@ -10,6 +10,7 @@
 #include "debug.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 
 static FILE* debug_log;

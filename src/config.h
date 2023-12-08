@@ -34,6 +34,8 @@
 
 #define CONFIG_MAX_TEXTURES       32
 #define CONFIG_MAX_MODELS         32
+
+#define CONFIG_MATRIX_STACK_SIZE  32
 // ============================================================================
 // End Program Configuration
 // ============================================================================

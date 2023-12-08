@@ -1,6 +1,6 @@
 // ============================================================================
 // File:        mv.h
-// Description: Matrix and vector math header
+// Description: Matrix and Vectors (header)
 // Author:      Shirobon
 // Date:        2023/12/04
 // ============================================================================
@@ -37,6 +37,34 @@ typedef struct mat4_t
 {
     float e[16];
 } mat4_t;
+
+typedef enum mv_matrix_model_t {
+    MV_MODELVIEW,
+    MV_PROJECTION
+} mv_matrix_model_t;
+
+
+
+// ============================================================================
+// Function Declarations
+// ============================================================================
+
+void mv_set_matrix_model(mv_matrix_model_t m);
+void mv_push_matrix(void);
+void mv_pop_matrix(void);
+void mv_identity(void);
+void mv_rotate(float angle, float x, float y, float z);
+void mv_scale(float x, float y, float z);
+void mv_translate(float x, float y, float z);
+void mv_ortho(float left, float right, float bottom, float top, float near, float far);
+void mv_frustum(float left, float right, float bottom, float top, float near, float far);
+void mv_perspective(float fovy, float aspect, float near, float far);
+void mv_calculate_transform(void);
+
+// ============================================================================
+// Global Transformation Matrix - Matrix to apply when transforming vertices
+// ============================================================================
+extern mat4_t g_mv_transform;
 
 // ============================================================================
 // Vector Operations
@@ -100,115 +128,18 @@ INLINE vec3_t mv_unit_normal_from_plane(vec3_t a, vec3_t b, vec3_t c)
 // Matrix Operations
 // ============================================================================
 
-INLINE mat4_t mv_mat_multiply(mat4_t a, mat4_t b)
+INLINE vec3_t mv_mat_vec_transform(vec3_t v)
 {
-    mat4_t result;
+    #define m g_mv_transform
 
-    for(int i = 0; i < 4; i++) {
-        for(int j = 0; j < 4; j++) {
-            result.e[(j*4)+1] = (a.e[0+i]  * b.e[(j*4)])    + \
-                                (a.e[4+i]  * b.e[(j*4)+1])  + \
-                                (a.e[8+i]  * b.e[(j*4)+2])  + \
-                                (a.e[12+i] * b.e[(j*4)+3]);
-        }
-    }
-
-    return result;
-}
-
-INLINE mat4_t mv_mat_identity_matrix(void)
-{
-    // It may look like row major, but it's the same order as column major
-    return (mat4_t) { { 1.0f, 0.0f, 0.0f, 0.0f,
-                        0.0f, 1.0f, 0.0f, 0.0f,
-                        0.0f, 0.0f, 1.0f, 0.0f,
-                        0.0f, 0.0f, 0.0f, 1.0f } };
-}
-
-INLINE mat4_t mv_mat_scale_matrix(float x, float y, float z)
-{
-    // It may look like row major, but it's the same order as column major
-    return (mat4_t) { { x   , 0.0f, 0.0f, 0.0f,
-                        0.0f, y   , 0.0f, 0.0f,
-                        0.0f, 0.0f, z   , 0.0f,
-                        0.0f, 0.0f, 0.0f, 1.0f } };
-}
-
-INLINE mat4_t mv_mat_translation_matrix(float x, float y, float z)
-{
-    return (mat4_t) { { 1.0f, 0.0f, 0.0f, 0.0f,
-                        0.0f, 1.0f, 0.0f, 0.0f,
-                        0.0f, 0.0f, 1.0f, 0.0f,
-                           x,    y,    z, 1.0f } };
-}
-
-INLINE mat4_t mv_mat_rotation_matrix(float angle, float x, float y, float z)
-{
-    float c = cosf(angle);
-    float s = sinf(angle);
-    float t = 1.0f - c;
-
-    vec3_t axis = mv_vec_normalize((vec3_t){x, y, z});
-
-    x = axis.x;
-    y = axis.y;
-    z = axis.z;
-
-    mat4_t r;
-
-    r.e[0] = (x*x*t)+c;     r.e[4] = (t*x*y)-(s*z); r.e[8]  = (t*x*z)+(s*y); r.e[12] = 0.0f;
-    r.e[1] = (t*x*y)+(s*z); r.e[5] = (t*y*y)+c;     r.e[9]  = (t*y*z)-(s*x); r.e[13] = 0.0f;
-    r.e[2] = (t*x*z)-(s*y); r.e[6] = (t*y*z)+(s*x); r.e[10] = (t*z*z)+c;     r.e[14] = 0.0f;
-    r.e[3] = 0.0f;          r.e[7] = 0.0f;          r.e[11] = 0.0f;          r.e[15] = 1.0f;
-
-    return r;
-}
-
-INLINE mat4_t mv_mat_orthographic_matrix(float l, float r, float b, float t, float zn, float zf)
-{
-    mat4_t m =  {{0.0f}};
-    m.e[0]   =  2.0f/(r-l);
-    m.e[5]   =  2.0f/(t-b);
-    m.e[10]  = -2.0f/(zf-zn);
-    m.e[12]  = -(r+l)/(r-l);
-    m.e[13]  = -(t+b)/(t-b);
-    m.e[14]  = -(zf+zn)/(zf-zn);
-    m.e[15]  =  1.0f;
-
-    return m;
-}
-
-INLINE mat4_t mv_mat_perspective_matrix_impl(float l, float r, float b, float t, float zn, float zf)
-{
-    mat4_t m =  {{0.0f}};
-    m.e[0]   =  (2.0f*zn)/(r-l);
-    m.e[5]   =  (2.0f*zn)/(t-b);
-    m.e[8]   =  (r+l)/(r-l);
-    m.e[9]   =  (t+b)/(t-b);
-    m.e[10]  = -(zf+zn)/(zf-zn);
-    m.e[11]  = -1.0f;
-    m.e[14]  = -(2.0f*zf*zn)/(zf-zn);
-
-    return m;
-}
-
-INLINE mat4_t mv_mat_perspective_matrix(float fov, float aspect, float zn, float zf)
-{
-    float y = zn * tanf(fov/2.0f);
-    float x = y  * aspect;
-    return mv_mat_perspective_matrix_impl(-x, x, -y, y, zn, zf);
-}
-
-INLINE vec3_t mv_mat_vec_transform(mat4_t m, vec3_t v)
-{
     float x = m.e[0]*v.x + m.e[4]*v.y + m.e[8] *v.z + m.e[12]*1.0f;
     float y = m.e[1]*v.x + m.e[5]*v.y + m.e[9] *v.z + m.e[13]*1.0f;
     float z = m.e[2]*v.x + m.e[6]*v.y + m.e[10]*v.z + m.e[14]*1.0f;
     float w = m.e[3]*v.x + m.e[7]*v.y + m.e[11]*v.z + m.e[15]*1.0f;
 
+    #undef m
+
     return (vec3_t){x/w, y/w, z/w}; // Do perspective divide here
 }
-
-
 
 #endif // MV_H
