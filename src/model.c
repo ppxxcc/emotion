@@ -136,25 +136,25 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
                                                           &vc, &vtc, &vnc);
 
             m.faces[face_idx].a.color.argb = 0xFFFFFFFF;
-            m.faces[face_idx].a.position.x = vertices[(3*va)+0];
-            m.faces[face_idx].a.position.y = vertices[(3*va)+1];
-            m.faces[face_idx].a.position.z = vertices[(3*va)+2];
-            m.faces[face_idx].a.u = uv[(2*vta)+0];
-            m.faces[face_idx].a.v = uv[(2*vta)+1];
+            m.faces[face_idx].a.position.x = vertices[(3*(va-1))+0];
+            m.faces[face_idx].a.position.y = vertices[(3*(va-1))+1];
+            m.faces[face_idx].a.position.z = vertices[(3*(va-1))+2];
+            m.faces[face_idx].a.u = uv[(2*(vta-1))+0];
+            m.faces[face_idx].a.v = uv[(2*(vta-1))+1];
 
             m.faces[face_idx].b.color.argb = 0xFFFFFFFF;
-            m.faces[face_idx].b.position.x = vertices[(3*vb)+0];
-            m.faces[face_idx].b.position.y = vertices[(3*vb)+1];
-            m.faces[face_idx].b.position.z = vertices[(3*vb)+2];
-            m.faces[face_idx].b.u = uv[(2*vtb)+0];
-            m.faces[face_idx].b.v = uv[(2*vtb)+1];
+            m.faces[face_idx].b.position.x = vertices[(3*(vb-1))+0];
+            m.faces[face_idx].b.position.y = vertices[(3*(vb-1))+1];
+            m.faces[face_idx].b.position.z = vertices[(3*(vb-1))+2];
+            m.faces[face_idx].b.u = uv[(2*(vtb-1))+0];
+            m.faces[face_idx].b.v = uv[(2*(vtb-1))+1];
 
             m.faces[face_idx].c.color.argb = 0xFFFFFFFF;
-            m.faces[face_idx].c.position.x = vertices[(3*vc)+0];
-            m.faces[face_idx].c.position.y = vertices[(3*vc)+1];
-            m.faces[face_idx].c.position.z = vertices[(3*vc)+2];
-            m.faces[face_idx].c.u = uv[(2*vtc)+0];
-            m.faces[face_idx].c.v = uv[(2*vtc)+1];
+            m.faces[face_idx].c.position.x = vertices[(3*(vc-1))+0];
+            m.faces[face_idx].c.position.y = vertices[(3*(vc-1))+1];
+            m.faces[face_idx].c.position.z = vertices[(3*(vc-1))+2];
+            m.faces[face_idx].c.u = uv[(2*(vtc-1))+0];
+            m.faces[face_idx].c.v = uv[(2*(vtc-1))+1];
 
             face_idx++;
         }
