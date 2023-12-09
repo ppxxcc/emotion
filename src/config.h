@@ -27,7 +27,7 @@
 
 #define CONFIG_FORCEINLINE
 
-#define CONFIG_RESOLUTION         240
+#define CONFIG_RESOLUTION         480
 
 #define CONFIG_DEBUG_LOG_ENABLED
 #define CONFIG_DEBUG_LOG_PATH     "/pc/debug.log"

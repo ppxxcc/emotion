@@ -12,6 +12,7 @@
 #include "controller.h"
 #include "graphics.h"
 #include "model.h"
+#include "mv.h"
 
 int main(void)
 {
@@ -22,6 +23,16 @@ int main(void)
     model_initialize();
 
     controller_initialize();
+
+    mv_set_matrix_model(MV_PROJECTION);
+    mv_identity();
+
+    mv_set_matrix_model(MV_MODELVIEW);
+    mv_identity();
+
+    mv_scale(CONFIG_SCREEN_W/3.0f, CONFIG_SCREEN_H/3.0f, 1.0f);
+
+    mv_translate(CONFIG_SCREEN_W/2.0f, CONFIG_SCREEN_H/2.0f, 2.0f);
 
     gfx_tid_t   earth_texture = gfx_load_texture("/rd/asset/texture/earth_512x512.565", 512, 512);
     
@@ -37,45 +48,30 @@ int main(void)
         return 0;
     }
 
-    /*
-    gfx_vertex_t a = {
-                .position = { 80.0f, 40.0f, 1.0f },
-                .u = 0.0f, .v = 0.0f,
-                .color = { 0xFFFFFFFF }
-                };
-    gfx_vertex_t b = {
-                .position = { 240.0f, 40.0f, 1.0f },
-                .u = 1.0f, .v = 0.0f,
-                .color = { 0xFFFFFFFF }
-                };
-    gfx_vertex_t c = {
-                .position = { 240.0f, 200.0f, 1.0f },
-                .u = 1.0f, .v = 1.0f,
-                .color = { 0xFFFFFFFF }
-                };
-    gfx_vertex_t d = {
-                .position = { 80.0f, 200.0f, 1.0f },
-                .u = 0.0f, .v = 1.0f,
-                .color = { 0xFFFFFFFF }
-                };
-    */
-
     while(1) {
+        static float angle = 0.0f;
+        angle += 0.01f;
+        if(angle >= 6.28f) {
+            angle = 0.0f;
+        }
+
         controller_read_state();
         if(controller_test_button(CONTROLLER_START, CONTROLLER_PRESSED)) {
             debug_printf(DEBUG_INFO, "Start was pressed. Exiting demo.\n");
             break;
         }
 
-        gfx_begin();
+        mv_push_matrix();
+        mv_rotate(angle, 0.0f, 1.0f, 0.0f);
+        mv_calculate_transform();
 
-        //gfx_draw_op_tex_tri(a, c, d, earth_texture);
-        //gfx_draw_op_tex_tri(a, b, c, earth_texture);
+        gfx_begin();
 
         model_render_obj(earth_model);
 
         gfx_end();
 
+        mv_pop_matrix();
 
     }
 

@@ -11,7 +11,7 @@
 #include "config.h"
 
 #include <stdlib.h>
-#include <math.h>
+#include <dc/fmath.h>
 
 // Useful constants
 #define MV_PI           (3.14159265359f)
@@ -61,6 +61,10 @@ void mv_frustum(float left, float right, float bottom, float top, float near, fl
 void mv_perspective(float fovy, float aspect, float near, float far);
 void mv_calculate_transform(void);
 
+mat4_t mv_get_matrix(mv_matrix_model_t m);
+
+void mv_print_matrix(mat4_t m);
+
 // ============================================================================
 // Global Transformation Matrix - Matrix to apply when transforming vertices
 // ============================================================================
@@ -103,7 +107,7 @@ INLINE vec3_t mv_vec_cross_product(vec3_t a, vec3_t b)
 
 INLINE float mv_vec_length(vec3_t a)
 {
-    return sqrtf((a.x * a.x) + (a.y * a.y) + (a.z * a.z));
+    return fsqrt((a.x * a.x) + (a.y * a.y) + (a.z * a.z));
 }
 
 INLINE vec3_t mv_vec_normalize(vec3_t a)

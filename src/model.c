@@ -9,6 +9,8 @@
 #include "model.h"
 #include "debug.h"
 
+#include "mv.h"
+
 #include <ctype.h>
 #include <string.h>
 
@@ -217,24 +219,23 @@ void model_render_obj(model_mid_t mid)
             gfx_vertex_t a = m.faces[i].a;
             gfx_vertex_t b = m.faces[i].b;
             gfx_vertex_t c = m.faces[i].c;
-            a.position.x = ((CONFIG_RESOLUTION/2.5f)*a.position.x) + (CONFIG_SCREEN_W/2.0f);
-            a.position.y = ((CONFIG_RESOLUTION/2.5f)*a.position.y) + (CONFIG_SCREEN_H/2.0f);
-            a.position.z = a.position.z + 2.0f;
-
-            b.position.x = ((CONFIG_RESOLUTION/2.5f)*b.position.x) + (CONFIG_SCREEN_W/2.0f);
-            b.position.y = ((CONFIG_RESOLUTION/2.5f)*b.position.y) + (CONFIG_SCREEN_H/2.0f);
-            b.position.z = b.position.z + 2.0f;
+            a.position = mv_mat_vec_transform(a.position);
+            b.position = mv_mat_vec_transform(b.position);
+            c.position = mv_mat_vec_transform(c.position);
             
-            c.position.x = ((CONFIG_RESOLUTION/2.5f)*c.position.x) + (CONFIG_SCREEN_W/2.0f);
-            c.position.y = ((CONFIG_RESOLUTION/2.5f)*c.position.y) + (CONFIG_SCREEN_H/2.0f);
-            c.position.z = c.position.z + 2.0f;
-
             gfx_draw_op_tex_tri(a, b, c, m.tid);
         }
     }
     else {
         for(size_t i = 0; i < m.face_count; i++) {
-            gfx_draw_op_tri(m.faces[i].a, m.faces[i].b, m.faces[i].c);
+            gfx_vertex_t a = m.faces[i].a;
+            gfx_vertex_t b = m.faces[i].b;
+            gfx_vertex_t c = m.faces[i].c;
+            a.position = mv_mat_vec_transform(a.position);
+            b.position = mv_mat_vec_transform(b.position);
+            c.position = mv_mat_vec_transform(c.position);
+            
+            gfx_draw_op_tri(a, b, c);
         }
     }
 }

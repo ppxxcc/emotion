@@ -8,6 +8,8 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include "mv.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <kos.h>
@@ -28,9 +30,7 @@ typedef union gfx_color_t
 
 typedef struct gfx_vertex_t
 {
-    struct {
-        float x, y, z;
-    } position;        // 3D position in space
+    vec3_t position;   // 3D position in space
     float u, v;        // Texture coordinates
     gfx_color_t color; // 32-bit ARGB
 } gfx_vertex_t;

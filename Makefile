@@ -37,6 +37,11 @@ ROMDISKOBJ  = $(OBJ_DIR)/romdisk.o
 
 BUILDMODE ?= DEBUG
 
+# Flag to disable loading assets into romdisk to speed up ELF sending
+# when wanting to debug something that doesn't require assets
+# which will bloat the executable
+NOASSETS ?= FALSE 
+
 ifeq ($(BUILDMODE),DEBUG)
 	CFLAGS += -g -O0
 	TARGET = $(OUT_DIR)/emotion_dbg.elf
@@ -45,6 +50,11 @@ else ifeq ($(BUILDMODE),OPTIMIZE)
 	TARGET = $(OUT_DIR)/emotion_rls.elf
 else
 	$(error Invalid build mode: $(BUILDMODE))
+endif
+
+ifeq ($(NOASSETS),TRUE)
+	TEXTUREOBJ :=
+	MODELOBJ :=
 endif
 
 # Default target

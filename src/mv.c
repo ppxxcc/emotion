@@ -12,6 +12,7 @@
 #include "mv.h"
 
 #include <stdint.h>
+#include <math.h>
 
 // Global so it can be directly accessed from inlined function
 // Since the transform will need to be applied to every vertex
@@ -48,7 +49,7 @@ INLINE mat4_t matrix_multiply(mat4_t a, mat4_t b)
 
     for(int i = 0; i < 4; i++) {
         for(int j = 0; j < 4; j++) {
-            result.e[(j*4)+1] = (a.e[0+i]  * b.e[(j*4)])    + \
+            result.e[(j*4)+i] = (a.e[0+i]  * b.e[(j*4)])    + \
                                 (a.e[4+i]  * b.e[(j*4)+1])  + \
                                 (a.e[8+i]  * b.e[(j*4)+2])  + \
                                 (a.e[12+i] * b.e[(j*4)+3]);
@@ -127,8 +128,8 @@ void mv_identity(void)
 
 void mv_rotate(float angle, float x, float y, float z)
 {
-    float c = cosf(angle);
-    float s = sinf(angle);
+    float c = fcos(angle);
+    float s = fsin(angle);
     float t = 1.0f - c;
 
     vec3_t axis = mv_vec_normalize((vec3_t){x, y, z});
@@ -216,7 +217,7 @@ void mv_frustum(float left, float right, float bottom, float top, float near, fl
 void mv_perspective(float fovy, float aspect, float near, float far)
 {
     float x, y;
-    y = near * tanf(fovy / 2.0f);
+    y = near * ftan(fovy / 2.0f);
     x = y * aspect;
     mv_frustum(-x, x, -y, y, near, far);
 }
@@ -225,3 +226,21 @@ void mv_calculate_transform(void)
 {
     g_mv_transform = matrix_multiply(projection, modelview);
 }
+
+mat4_t mv_get_matrix(mv_matrix_model_t m)
+{
+    return (m == MV_MODELVIEW ? modelview : projection);
+}
+
+void mv_print_matrix(mat4_t m)
+{
+    debug_printf(DEBUG_NONE, "----------------------------------\n");
+    for(int i = 0; i < 4; i++) {
+        for(int j = 0; j < 4; j++) {
+            debug_printf(DEBUG_NONE, "%7.2f  ", m.e[(j*4)+i]);
+        }
+        debug_printf(DEBUG_NONE, "\n");
+    }
+    debug_printf(DEBUG_NONE, "----------------------------------\n");
+}
+
