@@ -16,7 +16,7 @@
 
 int main(void)
 {
-    debug_begin(DEBUG_STDOUT | DEBUG_FILE);
+    debug_begin(CONFIG_DEBUG_DEFAULT_MODE);
 
     gfx_initialize();
 
@@ -30,7 +30,7 @@ int main(void)
     mv_set_matrix_model(MV_MODELVIEW);
     mv_identity();
 
-    mv_scale(CONFIG_SCREEN_W/3.0f, CONFIG_SCREEN_H/3.0f, 1.0f);
+    mv_scale(CONFIG_SCREEN_W/2.2f/1.33f, CONFIG_SCREEN_H/2.2f, 1.0f);
 
     mv_translate(CONFIG_SCREEN_W/2.0f, CONFIG_SCREEN_H/2.0f, 2.0f);
 
@@ -63,6 +63,7 @@ int main(void)
 
         mv_push_matrix();
         mv_rotate(angle, 0.0f, 1.0f, 0.0f);
+        mv_rotate(angle, 1.0f, 1.0f, 1.0f);
         mv_calculate_transform();
 
         gfx_begin();

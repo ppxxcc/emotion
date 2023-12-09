@@ -29,6 +29,7 @@
 
 #define CONFIG_RESOLUTION         480
 
+#define CONFIG_DEBUG_DEFAULT_MODE DEBUG_STDOUT
 #define CONFIG_DEBUG_LOG_ENABLED
 #define CONFIG_DEBUG_LOG_PATH     "/pc/debug.log"
 
@@ -36,6 +37,8 @@
 #define CONFIG_MAX_MODELS         32
 
 #define CONFIG_MATRIX_STACK_SIZE  32
+
+
 // ============================================================================
 // End Program Configuration
 // ============================================================================
