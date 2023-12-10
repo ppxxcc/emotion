@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <kos.h>
 
 static gfx_texture_t texture[CONFIG_MAX_TEXTURES];
@@ -22,6 +23,7 @@ static size_t        texture_count;
 static size_t        texture_memory;
 static size_t        vertex_count;
 static size_t        vertex_memory;
+
 
 void gfx_initialize(void)
 {
@@ -233,4 +235,102 @@ void gfx_draw_op_tex_tri(gfx_vertex_t va, gfx_vertex_t vb, gfx_vertex_t vc, gfx_
 
     vertex_count  += 3;
     vertex_memory += sizeof(hdr) + 3*sizeof(v);
+}
+
+void gfx_draw_op_tex1555_tri(gfx_vertex_t va, gfx_vertex_t vb, gfx_vertex_t vc, gfx_tid_t tid)
+{
+    pvr_poly_hdr_t hdr;
+    pvr_poly_cxt_t cxt;
+    pvr_vertex_t   v;
+    gfx_texture_t  txr;
+
+    txr = texture[tid];
+
+    pvr_poly_cxt_txr(&cxt,  PVR_LIST_OP_POLY,
+                            PVR_TXRFMT_ARGB1555 | PVR_TXRFMT_NONTWIDDLED,
+                            txr.width,
+                            txr.height,
+                            txr.pvr_memory,
+                            PVR_FILTER_BILINEAR);
+    pvr_poly_compile(&hdr, &cxt);
+    pvr_prim(&hdr, sizeof(hdr));
+
+    v.flags = PVR_CMD_VERTEX;
+    v.x = va.position.x;
+    v.y = va.position.y;
+    v.z = va.position.z;
+    v.u = va.u;
+    v.v = va.v;
+    v.argb = va.color.argb;
+    v.oargb = 0;
+    pvr_prim(&v, sizeof(v));
+
+    v.flags = PVR_CMD_VERTEX;
+    v.x = vb.position.x;
+    v.y = vb.position.y;
+    v.z = vb.position.z;
+    v.u = vb.u;
+    v.v = vb.v;
+    v.argb = vb.color.argb;
+    v.oargb = 0;
+    pvr_prim(&v, sizeof(v));
+
+    v.flags = PVR_CMD_VERTEX_EOL;
+    v.x = vc.position.x;
+    v.y = vc.position.y;
+    v.z = vc.position.z;
+    v.u = vc.u;
+    v.v = vc.v;
+    v.argb = vc.color.argb;
+    v.oargb = 0;
+    pvr_prim(&v, sizeof(v));
+
+    vertex_count  += 3;
+    vertex_memory += sizeof(hdr) + 3*sizeof(v);
+}
+
+void gfx_font_printf(gfx_tid_t tid, float size, float x, float y, const char* fmt, ...)
+{
+    char buffer[256];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf(buffer, 256, fmt, args);
+    va_end(args);
+
+    size_t length = strlen(buffer);
+
+    for(size_t i = 0; i < length; i++) {
+        char c = buffer[i];
+        unsigned int offset_y = (unsigned int)c / 16;
+        unsigned int offset_x = (unsigned int)c % 16;
+        float uv_increment = 1.0f / 16.0f;
+
+        float u_topleft  = uv_increment * offset_x;
+        float v_topleft  = uv_increment * offset_y;
+        
+        float u_topright = u_topleft + uv_increment;
+        float v_topright = v_topleft;
+
+        float u_bottomright = u_topleft + uv_increment;
+        float v_bottomright = v_topleft + uv_increment;
+
+        float u_bottomleft = u_topleft;
+        float v_bottomleft = v_topleft + uv_increment;
+
+        gfx_vertex_t va = {{x,      y,      10000.0f}, u_topleft,     v_topleft,     {0xFFFF0000}};
+        gfx_vertex_t vb = {{x+size, y+size, 10000.0f}, u_bottomright, v_bottomright, {0xFF00FF00}};
+        gfx_vertex_t vc = {{x,      y+size, 10000.0f}, u_bottomleft,  v_bottomleft,  {0xFF0000FF}};
+        gfx_vertex_t vd = {{x+size, y,      10000.0f}, u_topright,    v_topright,    {0xFFFFFF00}};
+
+        gfx_draw_op_tex1555_tri(va, vb, vc, tid);
+        gfx_draw_op_tex1555_tri(va, vd, vb, tid);
+
+        x += size; // Increment position 16 pixels to the right for next character
+    }
+}
+
+gfx_vram_info_t gfx_get_vram_info(void)
+{
+    return (gfx_vram_info_t) { texture_count, texture_memory, vertex_count, vertex_memory };
 }

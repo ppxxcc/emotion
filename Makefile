@@ -28,8 +28,11 @@ TEXTUREOBJ = $(patsubst $(TEXTURE_DIR)/%.888, $(TEXTURE_DIR)/%.565, $(TEXTURESRC
 # Model Dependencies
 MODELOBJ = $(wildcard $(MODEL_DIR)/*.obj)
 
+# Font Dependency
+FONTOBJ = $(TEXTURE_DIR)/font_256x256.1555
+
 # Romdisk Dependencies
-ROMDISKDEPS = $(TEXTUREOBJ) $(MODELOBJ)
+ROMDISKDEPS = $(TEXTUREOBJ) $(MODELOBJ) $(FONTOBJ)
 ROMDISKIMG  = $(OBJ_DIR)/romdisk.img
 ROMDISKOBJ  = $(OBJ_DIR)/romdisk.o
 # Extensions to exclude from putting in romdisk

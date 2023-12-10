@@ -43,6 +43,14 @@ typedef struct gfx_texture_t
     gfx_tid_t tid;
 } gfx_texture_t;
 
+typedef struct gfx_vram_info_t
+{
+    size_t texture_count;
+    size_t texture_memory;
+    size_t vertex_count;
+    size_t vertex_memory;
+} gfx_vram_info_t;
+
 void gfx_initialize(void);
 void gfx_begin(void);
 void gfx_end(void);
@@ -50,9 +58,11 @@ void gfx_end(void);
 gfx_tid_t gfx_load_texture(const char* asset, size_t width, size_t height);
 void      gfx_free_texture(gfx_tid_t tid);
 
-void    gfx_draw_op_tri(gfx_vertex_t va, gfx_vertex_t vb, gfx_vertex_t vc);
-void    gfx_draw_op_tex_tri(gfx_vertex_t va, gfx_vertex_t vb, gfx_vertex_t vc, gfx_tid_t tid);
+void gfx_draw_op_tri(gfx_vertex_t va, gfx_vertex_t vb, gfx_vertex_t vc);
+void gfx_draw_op_tex_tri(gfx_vertex_t va, gfx_vertex_t vb, gfx_vertex_t vc, gfx_tid_t tid);
 
+void gfx_font_printf(gfx_tid_t tid, float size, float x, float y, const char* fmt, ...);
 
+gfx_vram_info_t gfx_get_vram_info(void);
 
 #endif // GRAPHICS_H
