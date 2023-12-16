@@ -14,6 +14,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "light.h" // TODO: Fix this hardcoded reest
+
 
 static model_t model[CONFIG_MAX_MODELS];
 static bool    model_occupied[CONFIG_MAX_MODELS];
@@ -55,11 +57,13 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
     
     size_t vertex_count = 0;
     size_t uv_count     = 0;
+    size_t normal_count = 0;
     size_t face_count   = 0;
     
     float* vertices = NULL;
     float* uv       = NULL;
-    
+    float* normals  = NULL;
+
     char line[256] = {0}; // 255 characters for a line should be enough.
 
     if((f = fopen(asset, "r")) == NULL) {
@@ -74,6 +78,9 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
         }
         else if(line[0] == 'v' && line[1] == 't') {
             uv_count++;
+        }
+        else if(line[0] == 'v' && line[1] == 'n') {
+            normal_count++;
         }
         else if(line[0] == 'f') {
             face_count++;
@@ -91,11 +98,19 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
         free(vertices);
         return MODEL_ERROR;
     }
+    if((normals = malloc(sizeof(float) * normal_count * 3)) == NULL) {
+        debug_printf(DEBUG_ERROR, "Failed to allocate memory for model normals.\n");
+        fclose(f);
+        free(vertices);
+        free(uv);
+        return MODEL_ERROR;
+    }
     if((m.faces = malloc(sizeof(model_face_t) * face_count)) == NULL) {
         debug_printf(DEBUG_ERROR, "Failed to allocate memory for model faces.\n");
         fclose(f);
         free(vertices);
         free(uv);
+        free(normals);
         return MODEL_ERROR;
     }
 
@@ -103,6 +118,7 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
 
     size_t vertex_idx = 0;
     size_t uv_idx     = 0;
+    size_t normal_idx = 0;
     
 
     // Since vertices can be defined after faces, collect all vertex info first
@@ -120,6 +136,13 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
             uv[uv_idx++] = u;
             uv[uv_idx++] = v;
         }
+        else if(line[0] == 'v' && line[1] == 'n') {
+            float x, y, z;
+            sscanf(line, "vn %f %f %f", &x, &y, &z);
+            normals[normal_idx++] = x;
+            normals[normal_idx++] = y;
+            normals[normal_idx++] = z;
+        }
     }
 
     rewind(f);
@@ -135,26 +158,36 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
                                                           &vb, &vtb, &vnb,
                                                           &vc, &vtc, &vnc);
 
-            m.faces[face_idx].a.color.argb = 0xFFFFFFFF;
+            m.faces[face_idx].a.color.argb = 0x00000000;
             m.faces[face_idx].a.position.x = vertices[(3*(va-1))+0];
             m.faces[face_idx].a.position.y = vertices[(3*(va-1))+1];
             m.faces[face_idx].a.position.z = vertices[(3*(va-1))+2];
             m.faces[face_idx].a.u = uv[(2*(vta-1))+0];
             m.faces[face_idx].a.v = uv[(2*(vta-1))+1];
+            m.faces[face_idx].an.x = normals[(3*(vna-1))+0];
+            m.faces[face_idx].an.y = normals[(3*(vna-1))+1];
+            m.faces[face_idx].an.z = normals[(3*(vna-1))+2];
 
-            m.faces[face_idx].b.color.argb = 0xFFFFFFFF;
+            m.faces[face_idx].b.color.argb = 0x00000000;
             m.faces[face_idx].b.position.x = vertices[(3*(vb-1))+0];
             m.faces[face_idx].b.position.y = vertices[(3*(vb-1))+1];
             m.faces[face_idx].b.position.z = vertices[(3*(vb-1))+2];
             m.faces[face_idx].b.u = uv[(2*(vtb-1))+0];
             m.faces[face_idx].b.v = uv[(2*(vtb-1))+1];
+            m.faces[face_idx].bn.x = normals[(3*(vnb-1))+0];
+            m.faces[face_idx].bn.y = normals[(3*(vnb-1))+1];
+            m.faces[face_idx].bn.z = normals[(3*(vnb-1))+2];
 
-            m.faces[face_idx].c.color.argb = 0xFFFFFFFF;
+            m.faces[face_idx].c.color.argb = 0x00000000;
             m.faces[face_idx].c.position.x = vertices[(3*(vc-1))+0];
             m.faces[face_idx].c.position.y = vertices[(3*(vc-1))+1];
             m.faces[face_idx].c.position.z = vertices[(3*(vc-1))+2];
             m.faces[face_idx].c.u = uv[(2*(vtc-1))+0];
             m.faces[face_idx].c.v = uv[(2*(vtc-1))+1];
+            m.faces[face_idx].cn.x = normals[(3*(vnc-1))+0];
+            m.faces[face_idx].cn.y = normals[(3*(vnc-1))+1];
+            m.faces[face_idx].cn.z = normals[(3*(vnc-1))+2];
+            
 
             face_idx++;
         }
@@ -162,6 +195,7 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
 
     free(vertices);
     free(uv);
+    free(normals);
     fclose(f);
 
     model_mid_t first_available = 0;
@@ -184,7 +218,7 @@ model_mid_t model_load_obj(const char* asset, gfx_tid_t tid, bool textured)
 
     debug_printf(DEBUG_INFO, "Loaded model (mid = %d)\n", mid);
     debug_printf(DEBUG_BLANK,"Asset: %s\n", asset);
-    debug_printf(DEBUG_BLANK,"Vertices: %d   Faces: %d\n", vertex_count, face_count);
+    debug_printf(DEBUG_BLANK,"Vertices: %d   UVs: %d   Normals: %d   Faces: %d\n", vertex_count, uv_count, normal_count, face_count);
 
     debug_printf(DEBUG_INFO, "Active models: %d\n", model_count);
     debug_printf(DEBUG_BLANK, "Model memory used: %.1f KiB\n", model_memory / 1024.0f);
@@ -234,6 +268,12 @@ void model_render_obj(model_mid_t mid)
             a.position = mv_mat_vec_transform(a.position);
             b.position = mv_mat_vec_transform(b.position);
             c.position = mv_mat_vec_transform(c.position);
+            gfx_color_t colora = light_calculate_color(a.position, m.faces[i].an); // TODO: Remove this hardcoded reest
+            a.color = colora;
+            gfx_color_t colorb = light_calculate_color(b.position, m.faces[i].bn); // TODO: Remove this hardcoded reest
+            b.color = colorb;
+            gfx_color_t colorc = light_calculate_color(c.position, m.faces[i].cn); // TODO: Remove this hardcoded reest
+            c.color = colorc;
             
             gfx_draw_op_tri(a, b, c);
         }

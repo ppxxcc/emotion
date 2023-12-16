@@ -13,6 +13,7 @@
 #include "graphics.h"
 #include "model.h"
 #include "mv.h"
+#include "light.h"
 
 int main(void)
 {
@@ -31,21 +32,30 @@ int main(void)
     mv_identity();
 
     gfx_tid_t font_texture = gfx_load_texture("/rd/asset/texture/font_256x256.1555", 256, 256);
-
-    gfx_tid_t bruce_texture = gfx_load_texture("/rd/asset/texture/bruce_128x128.565", 128, 128);
-
     gfx_tid_t earth_texture = gfx_load_texture("/rd/asset/texture/earth_512x512.565", 512, 512);
 
-    model_mid_t cube_model = model_load_obj("/rd/asset/model/cube.obj", bruce_texture, true);
-    model_mid_t sphere_model = model_load_obj("/rd/asset/model/sphere_lowpoly.obj", earth_texture, true);
+    model_mid_t uvsphere_model  = model_load_obj("/rd/asset/model/uvsphere_medium.obj", GFX_UNUSED, false);
+    model_mid_t icosphere_model = model_load_obj("/rd/asset/model/icosphere_medium.obj", earth_texture, true);
+
+    gfx_vram_info_t vram = {0};
+
+
 
     while(1) {
-        static float angle = MV_PIDIV2;
-        static gfx_vram_info_t vram = {0};
-        angle += 0.01f;
-        if(angle >= 6.28f) {
-           angle = 0.0f;
-        }
+
+        float scale  = 150.0f;
+        float posx   = 320.0f;
+        float posy   = 240.0f;
+        float posz   = 500.0f;
+
+        static gfx_color_t ambient_color     = {0xFFFFFFFF};
+        static float       ambient_intensity = 0.1f;
+
+        static gfx_color_t point_color       = {0xFFFFFFFF};
+        
+        static float       point_intensity   = 0.1f;
+        static vec3_t      point_position    = {320.0f, 200.0f, 800.0f};
+
 
         controller_read_state();
         if(controller_test_button(CONTROLLER_START, CONTROLLER_PRESSED)) {
@@ -53,52 +63,68 @@ int main(void)
             break;
         }
 
+        if(controller_test_button(CONTROLLER_A, CONTROLLER_PRESSED)) {
+            ambient_intensity -= 0.01f;
+            if(ambient_intensity < 0.0f) ambient_intensity = 0.0f;
+        }
+
+        if(controller_test_button(CONTROLLER_B, CONTROLLER_PRESSED)) {
+            ambient_intensity += 0.01f;
+            if(ambient_intensity > 1.0f) ambient_intensity = 1.0f;
+        }
+
+        if(controller_test_button(CONTROLLER_X, CONTROLLER_PRESSED)) {
+            point_intensity -= 0.01f;
+            if(point_intensity < 0.0f) point_intensity = 0.0f;
+        }
+
+        if(controller_test_button(CONTROLLER_Y, CONTROLLER_PRESSED)) {
+            point_intensity += 0.01f;
+            if(point_intensity > 1.0f) point_intensity = 1.0f;
+        }
+
+        if(controller_test_button(CONTROLLER_DPAD_LEFT, CONTROLLER_PRESSED)) {
+            point_position.x -= 8.0f;
+            if(point_position.x < 0.0f) point_position.x = 0.0f;
+        }
+
+        if(controller_test_button(CONTROLLER_DPAD_RIGHT, CONTROLLER_PRESSED)) {
+            point_position.x += 8.0f;
+            if(point_position.x > 640.0f) point_position.x = 640.0f;
+        }
+
+        if(controller_test_button(CONTROLLER_DPAD_UP, CONTROLLER_PRESSED)) {
+            point_position.y -= 8.0f;
+            if(point_position.y < 0.0f) point_position.y = 0.0f;
+        }
+
+        if(controller_test_button(CONTROLLER_DPAD_DOWN, CONTROLLER_PRESSED)) {
+            point_position.y += 8.0f;
+            if(point_position.y > 480.0f) point_position.y = 480.0f;
+        }
+
         mv_identity(); // start with identity matrix
 
-        float scalew = (CONFIG_SCREEN_W/10.0f/1.33f);
-        float scaleh = (CONFIG_SCREEN_W/15.0f);
-        float posx   = (CONFIG_SCREEN_W/2.0f);
-        float posy   = (CONFIG_SCREEN_H/1.9f);
-        float posz   = 500.0f;
-        float factor = 3.0f;
-        // Cube transform
-        float cube_scale = (scaleh-(scaleh*fsin(factor*angle)*1.2)/4.0f)+10.0f;
-        mv_scale(cube_scale, cube_scale, 1.0f);
-        mv_translate(posx+(posx*fcos(factor*angle)*0.3), posy, posz-(posz*fsin(factor*angle)*0.8));
-        mv_rotate(angle*4.0f, 1.0, 1.0f, 1.0f);
-        mv_rotate(angle*6.0f, 1.0f, 0.0f, 0.0f);
-        mv_rotate(angle, 1.0f, 0.0f, 1.0f);
-        mv_push_matrix(); // save cube
 
-        mv_identity(); // start with identity
+        // Icosphere Transform
+        mv_scale(scale, scale, scale);
+        mv_translate(posx, posy, posz);
+        mv_calculate_transform();
 
-        // sphere transform
-        float sphere_scale = scaleh+(scaleh*fsin(factor*angle)*1.2)+30.0f;
-        mv_scale(sphere_scale, sphere_scale, 1.0f);
-        mv_translate(posx-(posx*fcos(factor*angle)*0.3), posy, posz+(posz*fsin(factor*angle)*0.8));
-        mv_rotate(angle*3.0f, 0.0, 1.0f, 0.0f);
-        mv_rotate(MV_DEG_TO_RAD(25), 1.0f, 0.0f, 0.0f);
+        light_set_ambient((light_t){LIGHT_AMBIENT, {0.0f, 0.0f, 0.0f}, ambient_color, ambient_intensity});
+        light_set_point(  (light_t){LIGHT_POINT,   point_position,     point_color,   point_intensity});
 
         gfx_begin();
         {
-            mv_calculate_transform();
-            model_render_obj(sphere_model);
-
-            mv_pop_matrix();
-            mv_calculate_transform();
-            model_render_obj(cube_model);
-           
-
-
-
-
-            gfx_font_printf(font_texture, 64+(20*fsin(6.0f*angle)), 140-(40*fsin(6.0f*angle)), 40, "BRUCK");
-
             
-            gfx_font_printf(font_texture, 16, 30, 380, "Vertices: %4d", vram.vertex_count);
-            gfx_font_printf(font_texture, 16, 30, 400, "Textures: %4d", vram.texture_count);
-            gfx_font_printf(font_texture, 16, 30, 420, "VRAM:      %6.2f KiB", (vram.vertex_memory + vram.texture_memory) / 1024.0f);
-            gfx_font_printf(font_texture, 16, 30, 440, "Angle:       %4.2f rad", angle);
+            model_render_obj(icosphere_model);
+
+            gfx_font_printf(font_texture, 16, 20, 20, "Ambient RGB: <%03d,%03d,%03d> @ %.1f%%", ambient_color.component.r, ambient_color.component.g, ambient_color.component.b, ambient_intensity * 100.0f);
+            gfx_font_printf(font_texture, 16, 20, 40, "Point   RGB: <%03d,%03d,%03d> @ %.1f%%", point_color.component.r, point_color.component.g, point_color.component.b, point_intensity * 100.0f);
+            gfx_font_printf(font_texture, 16, 20, 60, "Point   XYZ: <%03d,%03d,%03d>", (int)point_position.x, (int)point_position.y, (int)point_position.z);
+            gfx_font_printf(font_texture, 16, 20, 420, "Vertices: %4d", vram.vertex_count);
+            gfx_font_printf(font_texture, 16, 20, 440, "Textures: %4d", vram.texture_count);
+            gfx_font_printf(font_texture, 16, 350, 440, "VRAM: %6.2f KiB", (vram.vertex_memory + vram.texture_memory) / 1024.0f);
         }
         gfx_end();
 
@@ -106,11 +132,11 @@ int main(void)
 
     }
 
-    gfx_free_texture(earth_texture);
-    gfx_free_texture(bruce_texture);
+
+    model_free_obj(icosphere_model);
+    model_free_obj(uvsphere_model);
     gfx_free_texture(font_texture);
-    model_free_obj(sphere_model);
-    model_free_obj(cube_model);
+    gfx_free_texture(earth_texture);
 
     debug_end();
     return 0;

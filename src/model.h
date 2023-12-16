@@ -20,6 +20,7 @@ typedef uint8_t model_mid_t;
 typedef struct model_face_t
 {
     gfx_vertex_t a, b, c;
+    vec3_t       an, bn, cn;
 } model_face_t;
 
 typedef struct model_t

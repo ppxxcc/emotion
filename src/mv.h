@@ -10,6 +10,8 @@
 
 #include "config.h"
 
+#include "debug.h"
+
 #include <stdlib.h>
 #include <dc/fmath.h>
 

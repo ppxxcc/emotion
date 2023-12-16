@@ -318,10 +318,10 @@ void gfx_font_printf(gfx_tid_t tid, float size, float x, float y, const char* fm
         float u_bottomleft = u_topleft;
         float v_bottomleft = v_topleft + uv_increment;
 
-        gfx_vertex_t va = {{x,      y,      10000.0f}, u_topleft,     v_topleft,     {0xFFFF0000}};
-        gfx_vertex_t vb = {{x+size, y+size, 10000.0f}, u_bottomright, v_bottomright, {0xFF00FF00}};
-        gfx_vertex_t vc = {{x,      y+size, 10000.0f}, u_bottomleft,  v_bottomleft,  {0xFF0000FF}};
-        gfx_vertex_t vd = {{x+size, y,      10000.0f}, u_topright,    v_topright,    {0xFFFFFF00}};
+        gfx_vertex_t va = {{x,      y,      10000.0f}, u_topleft,     v_topleft,     {0xFFFFFFFF}};
+        gfx_vertex_t vb = {{x+size, y+size, 10000.0f}, u_bottomright, v_bottomright, {0xFFFFFFFF}};
+        gfx_vertex_t vc = {{x,      y+size, 10000.0f}, u_bottomleft,  v_bottomleft,  {0xFFFFFFFF}};
+        gfx_vertex_t vd = {{x+size, y,      10000.0f}, u_topright,    v_topright,    {0xFFFFFFFF}};
 
         gfx_draw_op_tex1555_tri(va, vb, vc, tid);
         gfx_draw_op_tex1555_tri(va, vd, vb, tid);
