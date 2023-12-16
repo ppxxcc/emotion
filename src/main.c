@@ -35,7 +35,7 @@ int main(void)
     gfx_tid_t earth_texture = gfx_load_texture("/rd/asset/texture/earth_512x512.565", 512, 512);
 
     model_mid_t uvsphere_model  = model_load_obj("/rd/asset/model/uvsphere_medium.obj", GFX_UNUSED, false);
-    model_mid_t icosphere_model = model_load_obj("/rd/asset/model/icosphere_medium.obj", earth_texture, true);
+    model_mid_t icosphere_model = model_load_obj("/rd/asset/model/icosphere_medium.obj", GFX_UNUSED, false);
 
     gfx_vram_info_t vram = {0};
 
